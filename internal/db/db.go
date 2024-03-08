@@ -22,26 +22,29 @@ func OpenDB() (*sql.DB, error) {
 		return nil, err
 	}
 
-	// Abre o arquivo SQL
-	sqlFile, err := os.Open(dbScript)
-	if err != nil {
-		return nil, err
-	}
-	defer sqlFile.Close()
-
-	// Lê o conteúdo do arquivo SQL
-	var sb strings.Builder
-	if _, err := io.Copy(&sb, sqlFile); err != nil {
-		return nil, err
-	}
-
-	// Separa as instruções SQL do arquivo
-	sqlStatements := strings.Split(sb.String(), ";")
-
-	// Executa as instruções SQL do arquivo no banco de dados
-	for _, sqlStatement := range sqlStatements {
-		if _, err := db.Exec(sqlStatement); err != nil {
+	// Verifica se o banco de dados já foi inicializado
+	if !isDBInitialized(db) {
+		// Abre o arquivo SQL
+		sqlFile, err := os.Open(dbScript)
+		if err != nil {
 			return nil, err
+		}
+		defer sqlFile.Close()
+
+		// Lê o conteúdo do arquivo SQL
+		var sb strings.Builder
+		if _, err := io.Copy(&sb, sqlFile); err != nil {
+			return nil, err
+		}
+
+		// Separa as instruções SQL do arquivo
+		sqlStatements := strings.Split(sb.String(), ";")
+
+		// Executa as instruções SQL do arquivo no banco de dados
+		for _, sqlStatement := range sqlStatements {
+			if _, err := db.Exec(sqlStatement); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -51,4 +54,15 @@ func OpenDB() (*sql.DB, error) {
 // CloseDB fecha o banco de dados SQLite
 func CloseDB(db *sql.DB) {
 	db.Close()
+}
+
+// isDBInitialized verifica se o banco de dados já foi inicializado
+func isDBInitialized(db *sql.DB) bool {
+	var count int
+	row := db.QueryRow("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='tasks'")
+	err := row.Scan(&count)
+	if err != nil {
+		return false
+	}
+	return count > 0
 }
