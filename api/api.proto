@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+option go_package = "github.com/rsales/todo-list-app/api";
+package yourapp.api;
+
+service TodoList {
+  rpc CreateTask(CreateTaskRequest) returns (Task) {}
+  rpc GetTasks(GetTasksRequest) returns (GetTasksResponse) {}
+  rpc DeleteTask(DeleteTaskRequest) returns (DeleteTaskResponse);
+}
+
+message CreateTaskRequest {
+  string title = 1;
+  string description = 2;
+}
+
+message GetTasksRequest {}
+
+message GetTasksResponse {
+  repeated Task tasks = 1;
+}
+
+message DeleteTaskRequest {
+  int32 id = 1;
+}
+
+message DeleteTaskResponse {
+  // Pode ser vazio ou conter informações adicionais, se necessário
+}
+
+message Task {
+  int32 id = 1;
+  string title = 2;
+  string description = 3;
+}
