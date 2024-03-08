@@ -21,4 +21,4 @@
 go.work
 
 # Database
-./db/tasks.db
+db/tasks.db
