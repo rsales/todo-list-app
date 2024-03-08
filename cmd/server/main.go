@@ -27,16 +27,16 @@ type server struct {
 }
 
 func (s *server) CreateTask(ctx context.Context, req *pb.CreateTaskRequest) (*pb.Task, error) {
-	result, err := s.db.Exec("INSERT INTO tasks (title, description) VALUES (?, ?)", req.Title, req.Description)
+	result, err := s.db.Exec("INSERT INTO tasks (title, description, completed) VALUES (?, ?, ?)", req.Title, req.Description, false)
 	if err != nil {
 		return nil, err
 	}
 	id, _ := result.LastInsertId()
-	return &pb.Task{Id: int32(id), Title: req.Title, Description: req.Description}, nil
+	return &pb.Task{Id: int32(id), Title: req.Title, Description: req.Description, Completed: false}, nil
 }
 
 func (s *server) GetTasks(ctx context.Context, req *pb.GetTasksRequest) (*pb.GetTasksResponse, error) {
-	rows, err := s.db.Query("SELECT id, title, description FROM tasks")
+	rows, err := s.db.Query("SELECT id, title, description, completed FROM tasks")
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (s *server) GetTasks(ctx context.Context, req *pb.GetTasksRequest) (*pb.Get
 	var tasks []*pb.Task
 	for rows.Next() {
 		var task pb.Task
-		err := rows.Scan(&task.Id, &task.Title, &task.Description)
+		err := rows.Scan(&task.Id, &task.Title, &task.Description, &task.Completed)
 		if err != nil {
 			return nil, err
 		}
@@ -61,6 +61,17 @@ func (s *server) DeleteTask(ctx context.Context, req *pb.DeleteTaskRequest) (*pb
 		return nil, err
 	}
 	return &pb.DeleteTaskResponse{}, nil
+}
+
+func (s *server) MarkTaskAsCompleted(ctx context.Context, req *pb.MarkTaskAsCompletedRequest) (*pb.MarkTaskAsCompletedResponse, error) {
+	// Atualiza o status da tarefa para concluída no banco de dados
+	_, err := s.db.Exec("UPDATE tasks SET completed = TRUE WHERE id = ?", req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Retorna uma resposta vazia, pois não há informações adicionais necessárias
+	return &pb.MarkTaskAsCompletedResponse{}, nil
 }
 
 // Implemente os métodos restantes para atualizar e excluir tarefas, se necessário
